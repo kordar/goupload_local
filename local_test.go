@@ -26,6 +26,11 @@ var (
 	mgr = goupload.NewManagerWithUploader(uploader)
 )
 
+func TestT001(t *testing.T) {
+	list, next, err := goupload_local.WalkDirWithPagination("/Users/mac/Pictures/bucket", 4, 2, nil)
+	logger.Infof("===========%+v, %+v, %+v", next, err, list)
+}
+
 func TestLocalUploader_GetToFile(t *testing.T) {
 	// 发送 GET 请求获取文件内容
 	_ = uploader.GetToFile(ctx, "baidu.html", "https://www.baidu.com", func(url string) (io.Reader, error) {
@@ -64,7 +69,7 @@ func TestLocalUploader_Move(t *testing.T) {
 }
 
 func TestLocalUploader_AppendString(t *testing.T) {
-	pos, err := uploader.AppendString(ctx, "m3.txt", 0, "\nMMMM\n", nil)
+	pos, err := uploader.AppendString(ctx, "m3.txt", 0, "BBBB\n", nil)
 	logger.Infof("=============%v, %v", err, pos)
 }
 
@@ -78,7 +83,7 @@ func TestLocalUploader_DelAll(t *testing.T) {
 }
 
 func TestLocalUploader_List(t *testing.T) {
-	list, next := uploader.List(ctx, "AAA/BB/CC", "0", 1000, nil)
+	list, next := uploader.List(ctx, "AA/BB/CC", "0", 1000, nil)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v,----%v", string(marshal), next)
 }
@@ -97,7 +102,7 @@ func TestLocalUploader_Tree(t *testing.T) {
 
 func TestLocalUploader_GetToFile_Mgr(t *testing.T) {
 	// 发送 GET 请求获取文件内容
-	_ = mgr.GetToFile("test", "baidu.html", "https://www.baidu.com", func(url string) (io.Reader, error) {
+	_ = mgr.GetToFile("test", "baidu.html", "https://www.baidu.com", func(url string) ([]byte, error) {
 
 		resp, err := http.Get(url)
 		if err != nil {
@@ -111,9 +116,7 @@ func TestLocalUploader_GetToFile_Mgr(t *testing.T) {
 		}
 
 		body, _ := ioutil.ReadAll(resp.Body)
-		reader := bytes.NewReader(body)
-
-		return reader, nil
+		return body, nil
 	})
 }
 
@@ -146,14 +149,22 @@ func TestLocalUploader_DelAll_Mgr(t *testing.T) {
 	mgr.DelAll("test", "AA")
 }
 
+func TestLocalUploader_DelMulti_Mgr(t *testing.T) {
+	_ = mgr.DelMulti("test", []goupload.BucketObject{
+		{Path: "AA/1.txt", FileType: "file"},
+		{Path: "AA/3.txt", FileType: "file"},
+		{Path: "AA/BB", FileType: "dir"},
+	})
+}
+
 func TestLocalUploader_List_Mgr(t *testing.T) {
-	list, next := mgr.List("test", "AA", "0", 1000, nil)
+	list, next := mgr.List("test", "AA", 1, 2)
 	marshal, _ := json.Marshal(list)
-	logger.Infof("-----------%v,----%v", string(marshal), next)
+	logger.Infof("-----------%v,----%v", next, string(marshal))
 }
 
 func TestLocalUploader_Tree_Mgr(t *testing.T) {
-	list := mgr.Tree("test", "AA", "", 100, 0, 0, false)
+	list := mgr.Tree("test", "AA", 1, 100, 0, 0, false)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v", string(marshal))
 }
