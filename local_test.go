@@ -27,7 +27,7 @@ var (
 )
 
 func TestT001(t *testing.T) {
-	list, next, err := goupload_local.WalkDirWithPagination("/Users/mac/Pictures/bucket", 4, 2, nil)
+	list, next, err := goupload_local.WalkDirWithPagination("/Users/mac/Pictures/bucket", "", 1, 2, true, nil)
 	logger.Infof("===========%+v, %+v, %+v", next, err, list)
 }
 
@@ -83,21 +83,21 @@ func TestLocalUploader_DelAll(t *testing.T) {
 }
 
 func TestLocalUploader_List(t *testing.T) {
-	list, next := uploader.List(ctx, "AA/BB/CC", "0", 1000, nil)
+	list, next := uploader.List(ctx, "AA", 1, 1000, true, nil)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v,----%v", string(marshal), next)
 }
 
 func TestLocalUploader_Tree(t *testing.T) {
-	list := uploader.Tree(ctx, "AAA", "", 100, 0, 1, false)
+	list := uploader.Tree(ctx, "AA", 1, 100, 0, 0, false, true)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v", string(marshal))
 }
 
 /**
- * **************************************************
- * * manager 测试
- * **************************************************
+ ****************************************************
+ *** manager 测试
+ ****************************************************
  */
 
 func TestLocalUploader_GetToFile_Mgr(t *testing.T) {
@@ -158,13 +158,13 @@ func TestLocalUploader_DelMulti_Mgr(t *testing.T) {
 }
 
 func TestLocalUploader_List_Mgr(t *testing.T) {
-	list, next := mgr.List("test", "AA", 1, 2)
+	list, next := mgr.List("test", "", 1, 100, true)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v,----%v", next, string(marshal))
 }
 
 func TestLocalUploader_Tree_Mgr(t *testing.T) {
-	list := mgr.Tree("test", "AA", 1, 100, 0, 0, false)
+	list := mgr.Tree("test", "", 1, 100, 0, 0, true, false)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v", string(marshal))
 }

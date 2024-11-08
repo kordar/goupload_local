@@ -31,7 +31,7 @@ func IsDirectory(path string) (bool, error) {
 }
 
 // WalkDirWithPagination 遍历目录，分页获取文件路径
-func WalkDirWithPagination(root string, page int, pageSize int, f FilterDirItem) ([]goupload.BucketObject, int, error) {
+func WalkDirWithPagination(root string, abroot string, page int, pageSize int, subCount bool, f FilterDirItem) ([]goupload.BucketObject, int, error) {
 	data := make([]goupload.BucketObject, 0, pageSize)
 	var index, total = 0, 0
 	offset := page - 1
@@ -65,19 +65,26 @@ func WalkDirWithPagination(root string, page int, pageSize int, f FilterDirItem)
 
 		if total >= offset*pageSize && index < pageSize {
 			if d.IsDir() {
-				data = append(data, goupload.BucketObject{
-					Path:         path.Join(root, d.Name()),
+				params := map[string]interface{}{}
+				if subCount {
+					params["count"] = WalkDirCount(path.Join(root, d.Name()), f)
+				}
+				object := goupload.BucketObject{
+					Path:         path.Join(abroot, d.Name()),
 					LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
 					FileType:     "dir",
 					Size:         info.Size(),
-				})
+					Params:       params,
+				}
+				data = append(data, object)
 			} else {
 				data = append(data, goupload.BucketObject{
-					Path:         path.Join(root, d.Name()),
+					Path:         path.Join(abroot, d.Name()),
 					LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
 					Size:         info.Size(),
 					FileType:     "file",
 					FileExt:      path.Ext(pathname),
+					Params:       map[string]interface{}{},
 				})
 			}
 			index++
@@ -100,7 +107,38 @@ func WalkDirWithPagination(root string, page int, pageSize int, f FilterDirItem)
 	return data, total, nil
 }
 
-func TreeDir(root string, next int, limit int, dep int, maxDep int, noleaf bool, f FilterDirItem) []goupload.BucketTreeObject {
+// WalkDirCount 遍历目录，分页获取文件路径
+func WalkDirCount(root string, f FilterDirItem) int {
+	var total = 0
+	_ = filepath.WalkDir(root, func(pathname string, d fs.DirEntry, err error) error {
+
+		if err != nil {
+			return err
+		}
+
+		// 排除当前目录
+		if root == pathname {
+			return nil
+		}
+
+		if f != nil && f(pathname, d) {
+			return nil
+		}
+
+		total++
+
+		// 防止遍历子目录
+		if d.IsDir() {
+			return filepath.SkipDir
+		}
+
+		return nil
+	})
+
+	return total
+}
+
+func TreeDir(root string, abroot string, next int, limit int, dep int, maxDep int, noleaf bool, subCount bool, f FilterDirItem) []goupload.BucketTreeObject {
 	treeData := make([]goupload.BucketTreeObject, 0)
 	_ = filepath.WalkDir(root, func(pathname string, d fs.DirEntry, err error) error {
 
@@ -121,19 +159,25 @@ func TreeDir(root string, next int, limit int, dep int, maxDep int, noleaf bool,
 			return nil
 		}
 
-		sub := path.Join(root, d.Name())
+		subRoot := path.Join(root, d.Name())
+		subAbRoot := path.Join(abroot, d.Name())
 		if d.IsDir() {
+			params := map[string]interface{}{}
 			object := goupload.BucketTreeObject{
 				Item: goupload.BucketObject{
-					Path:         sub,
+					Path:         subAbRoot,
 					LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
 					FileType:     "dir",
 					Size:         info.Size(),
+					Params:       params,
 				},
 				Children: make([]goupload.BucketTreeObject, 0),
 			}
 			if maxDep <= 0 || dep < maxDep {
-				object.Children = TreeDir(sub, next, limit, dep+1, maxDep, noleaf, f)
+				object.Children = TreeDir(subRoot, subAbRoot, next, limit, dep+1, maxDep, noleaf, subCount, f)
+			}
+			if subCount {
+				params["count"] = WalkDirCount(subRoot, f)
 			}
 			treeData = append(treeData, object)
 			return filepath.SkipDir
@@ -141,11 +185,12 @@ func TreeDir(root string, next int, limit int, dep int, maxDep int, noleaf bool,
 			if !noleaf {
 				object := goupload.BucketTreeObject{
 					Item: goupload.BucketObject{
-						Path:         sub,
+						Path:         subAbRoot,
 						LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
 						Size:         info.Size(),
 						FileType:     "file",
 						FileExt:      path.Ext(pathname),
+						Params:       map[string]interface{}{},
 					},
 					Children: make([]goupload.BucketTreeObject, 0),
 				}

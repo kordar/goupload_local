@@ -110,19 +110,24 @@ func (l *LocalUploader) PutFromFile(ctx context.Context, name string, filePath s
 	return l.Put(ctx, name, fd, args...)
 }
 
-func (l *LocalUploader) List(ctx context.Context, dir string, next interface{}, limit int, args ...interface{}) ([]goupload.BucketObject, interface{}) {
+func (l *LocalUploader) List(ctx context.Context, dir string, next interface{}, limit int, subCount bool, args ...interface{}) ([]goupload.BucketObject, interface{}) {
 	realpath := l.realpath(dir, false)
 	if ok, _ := IsDirectory(realpath); ok {
-		list, count, _ := WalkDirWithPagination(realpath, next.(int), limit, l.filter)
+		list, count, _ := WalkDirWithPagination(realpath, dir, next.(int), limit, subCount, l.filter)
 		return list, count
 	}
 	return []goupload.BucketObject{}, 0
 }
 
-func (l *LocalUploader) Tree(ctx context.Context, dir string, next interface{}, limit int, dep int, maxDep int, noleaf bool, args ...interface{}) []goupload.BucketTreeObject {
+func (l *LocalUploader) Count(ctx context.Context, dir string, args ...interface{}) int {
+	realpath := l.realpath(dir, false)
+	return WalkDirCount(realpath, l.filter)
+}
+
+func (l *LocalUploader) Tree(ctx context.Context, dir string, next interface{}, limit int, dep int, maxDep int, noleaf bool, subCount bool, args ...interface{}) []goupload.BucketTreeObject {
 	realpath := l.realpath(dir, false)
 	if ok, _ := IsDirectory(realpath); ok {
-		return TreeDir(realpath, next.(int), limit, dep, maxDep, noleaf, l.filter)
+		return TreeDir(realpath, dir, next.(int), limit, dep, maxDep, noleaf, subCount, l.filter)
 	}
 	return []goupload.BucketTreeObject{}
 }
