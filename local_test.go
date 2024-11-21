@@ -115,7 +115,7 @@ func TestLocalUploader_GetToFile_Mgr(t *testing.T) {
 			return nil, fmt.Errorf("failed to download file: %s", resp.Status)
 		}
 
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return body, nil
 	})
 }
@@ -167,4 +167,9 @@ func TestLocalUploader_Tree_Mgr(t *testing.T) {
 	list := mgr.Tree("test", "", 1, 100, 0, 0, true, false)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v", string(marshal))
+}
+
+func TestLocalUploader_Count(t *testing.T) {
+	count := mgr.Count("test", "")
+	logger.Infof("-----------%v", count)
 }
