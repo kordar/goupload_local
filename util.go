@@ -164,14 +164,12 @@ func TreeDir(root string, abroot string, next int, limit int, dep int, maxDep in
 		if d.IsDir() {
 			params := map[string]interface{}{}
 			object := goupload.BucketTreeObject{
-				Item: goupload.BucketObject{
-					Path:         subAbRoot,
-					LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
-					FileType:     "dir",
-					Size:         info.Size(),
-					Params:       params,
-				},
-				Children: make([]goupload.BucketTreeObject, 0),
+				Path:         subAbRoot,
+				LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
+				FileType:     "dir",
+				Size:         info.Size(),
+				Params:       params,
+				Children:     make([]goupload.BucketTreeObject, 0),
 			}
 			if maxDep <= 0 || dep < maxDep {
 				object.Children = TreeDir(subRoot, subAbRoot, next, limit, dep+1, maxDep, noleaf, subCount, f)
@@ -184,15 +182,13 @@ func TreeDir(root string, abroot string, next int, limit int, dep int, maxDep in
 		} else {
 			if !noleaf {
 				object := goupload.BucketTreeObject{
-					Item: goupload.BucketObject{
-						Path:         subAbRoot,
-						LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
-						Size:         info.Size(),
-						FileType:     "file",
-						FileExt:      path.Ext(pathname),
-						Params:       map[string]interface{}{},
-					},
-					Children: make([]goupload.BucketTreeObject, 0),
+					Path:         subAbRoot,
+					LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
+					Size:         info.Size(),
+					FileType:     "file",
+					FileExt:      path.Ext(pathname),
+					Params:       map[string]interface{}{},
+					Children:     make([]goupload.BucketTreeObject, 0),
 				}
 				treeData = append(treeData, object)
 			}

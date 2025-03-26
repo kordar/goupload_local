@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	uploader = goupload_local.NewLocalUploader("/Users/mac/Pictures/bucket", "test", func(s string, entry fs.DirEntry) bool {
+	uploader = goupload_local.NewLocalUploader("C:/", "", func(s string, entry fs.DirEntry) bool {
 		base := path.Base(s)
 		return strings.HasPrefix(base, ".")
 	})
@@ -27,8 +27,13 @@ var (
 )
 
 func TestT001(t *testing.T) {
-	list, next, err := goupload_local.WalkDirWithPagination("/Users/mac/Pictures/bucket", "", 1, 2, true, nil)
+	list, next, err := goupload_local.WalkDirWithPagination("C:/", "", 1, 2, true, nil)
 	logger.Infof("===========%+v, %+v, %+v", next, err, list)
+}
+
+func TestT002(t *testing.T) {
+	dir := goupload_local.TreeDir("C:/", "", 0, 2, 1, 5, true, true, nil)
+	logger.Infof("===========%+v", dir)
 }
 
 func TestLocalUploader_GetToFile(t *testing.T) {
@@ -83,13 +88,13 @@ func TestLocalUploader_DelAll(t *testing.T) {
 }
 
 func TestLocalUploader_List(t *testing.T) {
-	list, next := uploader.List(ctx, "AA", 1, 1000, true, nil)
+	list, next := uploader.List(ctx, "", 1, 1000, true, nil)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v,----%v", string(marshal), next)
 }
 
 func TestLocalUploader_Tree(t *testing.T) {
-	list := uploader.Tree(ctx, "AA", 1, 100, 0, 0, false, true)
+	list := uploader.Tree(ctx, "", 1, 10000, 0, 10, false, true)
 	marshal, _ := json.Marshal(list)
 	logger.Infof("-----------%v", string(marshal))
 }
