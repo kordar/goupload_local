@@ -62,10 +62,12 @@ func WalkDirWithPagination(root string, abroot string, page int, pageSize int, s
 		if err2 != nil {
 			return nil
 		}
-
+		params := map[string]interface{}{
+			"full_path": path.Join(root, d.Name()),
+			"filename":  d.Name(),
+		}
 		if total >= offset*pageSize && index < pageSize {
 			if d.IsDir() {
-				params := map[string]interface{}{}
 				if subCount {
 					params["count"] = WalkDirCount(path.Join(root, d.Name()), f)
 				}
@@ -84,7 +86,7 @@ func WalkDirWithPagination(root string, abroot string, page int, pageSize int, s
 					Size:         info.Size(),
 					FileType:     "file",
 					FileExt:      path.Ext(pathname),
-					Params:       map[string]interface{}{},
+					Params:       params,
 				})
 			}
 			index++
@@ -161,8 +163,11 @@ func TreeDir(root string, abroot string, next int, limit int, dep int, maxDep in
 
 		subRoot := path.Join(root, d.Name())
 		subAbRoot := path.Join(abroot, d.Name())
+		params := map[string]interface{}{
+			"full_path": subRoot,
+			"filename":  d.Name(),
+		}
 		if d.IsDir() {
-			params := map[string]interface{}{}
 			object := goupload.BucketTreeObject{
 				Path:         subAbRoot,
 				LastModified: info.ModTime().Format("2006-01-02 15:04:05"),
@@ -187,7 +192,7 @@ func TreeDir(root string, abroot string, next int, limit int, dep int, maxDep in
 					Size:         info.Size(),
 					FileType:     "file",
 					FileExt:      path.Ext(pathname),
-					Params:       map[string]interface{}{},
+					Params:       params,
 					Children:     make([]goupload.BucketTreeObject, 0),
 				}
 				treeData = append(treeData, object)
